@@ -33,7 +33,7 @@ int main(void)
         return -1;
 
     /* Create a windowed mode window and its OpenGL context */
-    window = glfwCreateWindow(640, 480, "Kassandra So", NULL, NULL);
+    window = glfwCreateWindow(500, 500, "Kassandra So", NULL, NULL);
     if (!window)
     {
         glfwTerminate();
@@ -57,13 +57,13 @@ int main(void)
         glEnd();
 
         glBegin(GL_TRIANGLES); //bot left
-        glVertex2f(-0.3f, -0.7f);
-        glVertex2f(0.3f, -0.7f);
+        glVertex2f(-0.3f, -0.5f);
+        glVertex2f(0.3f, -0.5f);
         glVertex2f(-0.5f, -0.f);
         glEnd();
 
         glBegin(GL_TRIANGLES); //bot left
-        glVertex2f(0.3f, -0.7f);
+        glVertex2f(0.3f, -0.5f);
         glVertex2f(-0.5f, 0.f);
         glVertex2f(0.5f, 0.f);
         glEnd();
