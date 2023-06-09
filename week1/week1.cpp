@@ -26,6 +26,10 @@
 #define TINYOBJLOADER_IMPLEMENTATION
 #include "tiny_obj_loader.h"
 
+#include <glm/glm.hpp>
+#include <glm/gtc/matrix_transform.hpp>
+#include <glm/gtc/type_ptr.hpp>
+
 #include <string>
 
 float x_mod = 0;
@@ -78,17 +82,19 @@ int main(void)
     glfwMakeContextCurrent(window);
     gladLoadGL();
 
-    glfwSetKeyCallback(window, Key_CallBack);
-
     std::fstream vertSrc("Shaders/sample.vert");
     std::stringstream vertBuff;
+    // add
     vertBuff << vertSrc.rdbuf();
+    //convert
     std::string vertS = vertBuff.str();
     const char* v = vertS.c_str();
 
     std::fstream fragSrc("Shaders/sample.frag");
     std::stringstream fragBuff;
+    //add
     fragBuff << fragSrc.rdbuf();
+    //convert
     std::string fragS = fragBuff.str();
     const char* f = fragS.c_str();
 
@@ -99,6 +105,8 @@ int main(void)
     GLuint fragShader = glCreateShader(GL_FRAGMENT_SHADER);
     glShaderSource(fragShader, 1, &f, NULL);
     glCompileShader(fragShader);
+
+    glfwSetKeyCallback(window, Key_CallBack);
 
     GLuint shaderProgram = glCreateProgram();
     glAttachShader(shaderProgram, vertShader);
@@ -179,6 +187,11 @@ int main(void)
     glBindVertexArray(0);
     glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
 
+    float Tx=0, Ty=0, Tz=0;
+    float Sx=1, Sy=1, Sz=1;
+    float Rx=1, Ry=1, Rz=1;
+    float theta=60;
+
     /* Loop until the user closes the window */
     while (!glfwWindowShouldClose(window))
     {
@@ -187,11 +200,28 @@ int main(void)
 
         //x_mod += 0.001f;
 
-        unsigned int xLoc = glGetUniformLocation(shaderProgram, "x");
-        glUniform1f(xLoc, x_mod);
+        glm::mat4 identity_matrix4 = glm::mat4(1.0f);
 
-        unsigned int yLoc = glGetUniformLocation(shaderProgram, "y");
-        glUniform1f(yLoc, y_mod);
+        glm::mat4 transformation_matrix = glm::translate(
+            identity_matrix4,
+            glm::vec3(Tx, Ty, Tz)
+        );
+        transformation_matrix = glm::scale(
+            transformation_matrix,
+            glm::vec3(Sx, Sy, Sz)
+        );
+        transformation_matrix = glm::rotate(
+            transformation_matrix,
+            glm::radians(theta),
+            glm::normalize(glm::vec3(Rx, Ry, Rz))
+        );
+
+        unsigned int transformLoc = glGetUniformLocation(shaderProgram, "transform");
+
+        glUniformMatrix4fv(transformLoc,
+            1,
+            GL_FALSE,
+            glm::value_ptr(transformation_matrix));
 
         glUseProgram(shaderProgram);
         glBindVertexArray(VAO);
