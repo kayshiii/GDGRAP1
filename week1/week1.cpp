@@ -66,8 +66,11 @@ int main(void)
     if (!glfwInit())
         return -1;
 
+    float height = 600.0f;
+    float width = 600.0f;
+
     /* Create a windowed mode window and its OpenGL context */
-    window = glfwCreateWindow(500, 500, "Kassandra So", NULL, NULL);
+    window = glfwCreateWindow(width, height, "Kassandra So", NULL, NULL);
     if (!window)
     {
         glfwTerminate();
@@ -81,6 +84,11 @@ int main(void)
     /* make the windows context current */
     glfwMakeContextCurrent(window);
     gladLoadGL();
+
+    glViewport(0,
+        0,
+        width,
+        height);
 
     std::fstream vertSrc("Shaders/sample.vert");
     std::stringstream vertBuff;
@@ -187,9 +195,9 @@ int main(void)
     glBindVertexArray(0);
     glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
 
-    float Tx=0, Ty=0, Tz=0;
-    float Sx=1, Sy=1, Sz=1;
-    float Rx=1, Ry=1, Rz=1;
+    float Tx=0, Ty=0, Tz=-5;
+    float Sx=10, Sy=10, Sz=1;
+    float Rx=10, Ry=10, Rz=1;
     float theta=60;
 
     /* Loop until the user closes the window */
@@ -201,6 +209,7 @@ int main(void)
         //x_mod += 0.001f;
 
         glm::mat4 identity_matrix4 = glm::mat4(1.0f);
+
 
         glm::mat4 transformation_matrix = glm::translate(
             identity_matrix4,
@@ -216,12 +225,44 @@ int main(void)
             glm::normalize(glm::vec3(Rx, Ry, Rz))
         );
 
+        //glm::mat4 projection = glm::ortho(-0.5f,
+        //    0.5f,
+        //    -0.5f,
+        //    0.5f,
+        //    -1.f,
+        //    1.0f);
+       glm::mat4 projection = glm::perspective(
+            glm::radians(60.f), 
+            height / width,
+            1.f,
+            100.f);
+
+       glm::mat4 view = glm::lookAt(
+           glm::vec3(0.0f, 0.0f, 5.0f), //camera movement
+           glm::vec3(0.0f, 3.0f, 0.0f), //taas or baba view
+           glm::vec3(0.0f, 1.0f, 0.0f)
+       );
+
         unsigned int transformLoc = glGetUniformLocation(shaderProgram, "transform");
 
         glUniformMatrix4fv(transformLoc,
             1,
             GL_FALSE,
             glm::value_ptr(transformation_matrix));
+
+        unsigned int projLoc = glGetUniformLocation(shaderProgram, "projection");
+
+        glUniformMatrix4fv(projLoc,
+            1,
+            GL_FALSE,
+            glm::value_ptr(projection));
+
+        unsigned int viewLoc = glGetUniformLocation(shaderProgram, "view");
+
+        glUniformMatrix4fv(viewLoc,
+            1,
+            GL_FALSE,
+            glm::value_ptr(view));
 
         glUseProgram(shaderProgram);
         glBindVertexArray(VAO);
