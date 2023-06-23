@@ -30,6 +30,9 @@
 #include <glm/gtc/matrix_transform.hpp>
 #include <glm/gtc/type_ptr.hpp>
 
+#define STB_IMAGE_IMPLEMENTATION
+#include "stb_image.h"
+
 #include <string>
 
 float x_mod = 0;
@@ -77,13 +80,42 @@ int main(void)
         return -1;
     }
 
-    /* Make the window's context current */
-    //glfwMakeContextCurrent(window);
-    //end of initialization
-
     /* make the windows context current */
     glfwMakeContextCurrent(window);
     gladLoadGL();
+
+    int img_width,
+        img_height,
+        colorChannels;
+
+    stbi_set_flip_vertically_on_load(true);
+
+    unsigned char* tex_bytes =
+        stbi_load("3D/ayaya.png",
+            &img_width,
+            &img_height,
+            &colorChannels,
+            0);
+
+    GLuint texture;
+    glGenTextures(1, &texture);
+    glActiveTexture(GL_TEXTURE0);
+    glBindTexture(GL_TEXTURE_2D, texture);
+
+    glTexImage2D(GL_TEXTURE_2D,
+        0,
+        GL_RGBA,
+        img_width,
+        img_height,
+        0,
+        GL_RGBA,
+        GL_UNSIGNED_BYTE,
+        tex_bytes);
+
+    glGenerateMipmap(GL_TEXTURE_2D);
+    stbi_image_free(tex_bytes);
+
+    glEnable(GL_DEPTH_TEST);
 
     glViewport(0,
         0,
@@ -122,7 +154,7 @@ int main(void)
 
     glLinkProgram(shaderProgram);
 
-    std::string path = "3D/bunny.obj";
+    std::string path = "3D/myCube.obj";
     std::vector<tinyobj::shape_t> shape;
     std::vector<tinyobj::material_t> material;
     std::string warning, error;
@@ -156,10 +188,22 @@ int main(void)
         0, 1, 2
     };
 
-    GLuint VAO, VBO, EBO;
+    GLfloat UV[]{
+        0.f, 1.f,
+        0.f, 0.f,
+        1.f, 1.f,
+        1.f, 0.f,
+        1.f, 1.f,
+        1.f, 0.f,
+        0.f, 1.f,
+        0.f, 0.f,
+    };
+
+    GLuint VAO, VBO, EBO, VBO_UV;
     glGenVertexArrays(1, &VAO);
     glGenBuffers(1, &VBO);
     glGenBuffers(1, &EBO);
+    glGenBuffers(1, &VBO_UV);
 
     //were working with this VAO
     glBindVertexArray(VAO);
@@ -191,25 +235,42 @@ int main(void)
         GL_STATIC_DRAW
     );
 
+    glBindBuffer(GL_ARRAY_BUFFER, VBO_UV);
+    glBufferData(GL_ARRAY_BUFFER,
+        sizeof(GLfloat) * (sizeof(UV) / sizeof(UV[0])),
+        &UV[0],
+        GL_DYNAMIC_DRAW
+    );
+
+    glVertexAttribPointer(
+        2,
+        2,
+        GL_FLOAT,
+        GL_FALSE,
+        2 * sizeof(float),
+        (void*)0
+    );
+
+    glEnableVertexAttribArray(2);
+
     glBindBuffer(GL_ARRAY_BUFFER, 0);
     glBindVertexArray(0);
     glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
 
-    float Tx=0, Ty=0, Tz=-5;
-    float Sx=10, Sy=10, Sz=1;
-    float Rx=10, Ry=10, Rz=1;
-    float theta=60;
+    float Tx=0, Ty=0, Tz=0;
+    float Sx=1, Sy=1, Sz=1;
+    float Rx=5, Ry=5, Rz=1;
+    float theta=0;
 
     /* Loop until the user closes the window */
     while (!glfwWindowShouldClose(window))
     {
         /* Render here */
-        glClear(GL_COLOR_BUFFER_BIT);
+        glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
         //x_mod += 0.001f;
 
         glm::mat4 identity_matrix4 = glm::mat4(1.0f);
-
 
         glm::mat4 transformation_matrix = glm::translate(
             identity_matrix4,
@@ -238,8 +299,8 @@ int main(void)
             100.f);
 
        glm::mat4 view = glm::lookAt(
-           glm::vec3(0.0f, 0.0f, 5.0f), //camera movement
-           glm::vec3(0.0f, 3.0f, 0.0f), //taas or baba view
+           glm::vec3(0.0f, 0.0f, 10.0f), //camera movement
+           glm::vec3(0.0f, 0.0f, 0.0f), //taas or baba view
            glm::vec3(0.0f, 1.0f, 0.0f)
        );
 
@@ -263,6 +324,10 @@ int main(void)
             1,
             GL_FALSE,
             glm::value_ptr(view));
+
+        GLuint tex0Address = glGetUniformLocation(shaderProgram, "tex0");
+        glBindTexture(GL_TEXTURE_2D, texture);
+        glUniform1i(tex0Address, 0);
 
         glUseProgram(shaderProgram);
         glBindVertexArray(VAO);
