@@ -154,7 +154,7 @@ int main(void)
 
     glLinkProgram(shaderProgram);
 
-    std::string path = "3D/myCube.obj";
+    std::string path = "3D/djSword.obj";
     std::vector<tinyobj::shape_t> shape;
     std::vector<tinyobj::material_t> material;
     std::string warning, error;
@@ -178,6 +178,8 @@ int main(void)
     }
     // uv
     std::vector<GLfloat> fullVertexData;
+    std::vector<GLfloat> normals;
+
     for (int i = 0; i < shape[0].mesh.indices.size(); i++) {
         tinyobj::index_t vData = shape[0].mesh.indices[i];
 
@@ -191,6 +193,19 @@ int main(void)
 
         fullVertexData.push_back(
             attributes.vertices[(vData.vertex_index * 3) + 2]
+        );
+
+        // assignment for sword
+        fullVertexData.push_back(
+            attributes.normals[(vData.normal_index * 3)]
+        );
+
+        fullVertexData.push_back(
+            attributes.normals[(vData.normal_index * 3) + 1]
+        );
+
+        fullVertexData.push_back(
+            attributes.normals[(vData.normal_index * 3) + 2]
         );
 
         fullVertexData.push_back(
@@ -247,19 +262,20 @@ int main(void)
         3, //XYZ
         GL_FLOAT,
         GL_FALSE,
-        5 * sizeof(float),
+        8 * sizeof(float),
         (void*)0
     );
 
-    GLintptr uvPtr = 3 * sizeof(float);
+    GLintptr uvPtr = 6 * sizeof(float); // + 3 for normals
     glVertexAttribPointer(
         2,
         2, //XYZ
         GL_FLOAT,
         GL_FALSE,
-        5 * sizeof(float),
+        8 * sizeof(float),  // 8 na laman
         (void*)uvPtr
     );
+
     glEnableVertexAttribArray(0);
     glEnableVertexAttribArray(2);
 
@@ -294,7 +310,7 @@ int main(void)
     glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
 
     float Tx=0, Ty=0, Tz=0;
-    float Sx=1, Sy=1, Sz=1;
+    float Sx=0.1, Sy=0.1, Sz=0.1;
     float Rx=5, Ry=5, Rz=1;
     float theta=0;
 
@@ -367,7 +383,7 @@ int main(void)
 
         glUseProgram(shaderProgram);
         glBindVertexArray(VAO);
-        glDrawArrays(GL_TRIANGLES, 0, fullVertexData.size() / 5);
+        glDrawArrays(GL_TRIANGLES, 0, fullVertexData.size() / 8);
         /*glDrawElements(
             GL_TRIANGLES,
             mesh_indices.size(),
