@@ -16,10 +16,25 @@ in vec2 texCoord;
 in vec3 normCoord;
 in vec3 fragPos;
 
+uniform sampler2D norm_tex;
+
+in mat3 TBN;
+
 
 void main() {
 
-	vec3 normal = normalize(normCoord);
+	vec4 pixelColor = texture(tex0, texCoord);
+	//if alpha is low enough
+	if (pixelColor.a < 0.1){
+	discard;
+	}
+
+	vec3 normal = texture(norm_tex, texCoord).rgb;
+	normal = normalize(normal * 2.0 - 1.0);
+	normal = normalize(TBN * normal);
+
+	//vec3 normal = normalize(normCoord);
+
 	vec3 lightDir = normalize(lightPos - fragPos);
 	vec3 ambientCol = ambientColor * ambientStr;
 
@@ -39,10 +54,10 @@ void main() {
     vec3 pointLight = (diffuse + specColor) * attenuation;
     
     //calculate final color (lighting calculations)
-    FragColor = texture(tex0, texCoord) * vec4(pointLight + ambientCol, 1.0);
+    //FragColor = texture(tex0, texCoord) * vec4(pointLight + ambientCol, 1.0);
 
 	//FragColor = vec4(0.7f, 0.0f, 0.0f, 1.0f);
-	FragColor = texture(tex0, texCoord);
+	//FragColor = texture(tex0, texCoord);
 	FragColor = vec4(specColor + diffuse + ambientCol, 1.0) * texture(tex0, texCoord);
 
 
